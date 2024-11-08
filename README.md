@@ -1,2 +1,2 @@
 # ObjectOrientedProgramming
-2-2. c++ / sdl
+2-2. c++(sdl)
