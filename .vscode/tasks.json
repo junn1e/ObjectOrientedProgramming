@@ -3,7 +3,7 @@
         {
             "type": "cppbuild",
             "label": "C/C++: gcc 활성 파일 빌드",
-            "command": "C:/mingw64/bin/gcc.exe",  // Windows 경로 수정
+            "command": "C:/mingw64/bin/g++.exe",  // Windows 경로 수정
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
