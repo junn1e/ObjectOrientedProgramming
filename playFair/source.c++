@@ -12,67 +12,84 @@ public:
 	void makeTable();
 	void showTable();
 	string makeEncryption(string mEncryption);
+	string makeDecryption(string mEncryption);
 };
 
 Playfair::Playfair(string mKey, string mPair) {
+	
 	this->mKey = mKey;
+	// mPair 오름차순인가 내림차순으로 정리
+	if (mPair[0] > mPair[2]) {
+		mPair[1] = mPair[2];
+		mPair[2] = mPair[0];
+		mPair[0] = mPair[1];
+		mPair[1] = '/';
+	}
 	this->mPair = mPair;
 }
 
+// 테이블 생성 함수: Playfair 암호화에 필요한 5x5 테이블 생성
 void Playfair::makeTable() {
-	// mKey와 mPair를 이용하여 mTable을 만드세요. (5 X 5 로 표현하시오)
-	string alpha = "abcdefghijklmnopqrstuvwxyz";
-	string cpKey = mKey + alpha; // 키와 알파벳 결합
+	// 키 뒤에 알파벳 붙이기
+	mKey += "abcdefghijklmnopqrstuvwxyz";
 
-	// 중복 제거를 위한 unordered_set 사용
-	unordered_set<char> seen; 
-	string uniqueKey;
+	// 결과 저장용 문자열
+	string result;
+	
+	// 중복 체크용 문자집합 (unordered_set)
+	unordered_set<char> keySet;
 
-	for (char ch : cpKey) {
-		if (ch != mPair[2] && seen.find(ch) == seen.end()) {
-			uniqueKey += ch;
-			seen.insert(ch);
+	// 테이블 생성
+	for (char c : mKey) {
+		// keySet.find(c) : 중복이 아닐 시 keySet.end() 반환
+		if (c != mPair[2] && keySet.find(c) == keySet.end()) {
+			result += c;
+			keySet.insert(c);
 		}
 	}
 
-	// 5x5 테이블 생성
+	// 5. 5x5 테이블 채우기
 	for (int k = 0; k < 25; k++) {
-		this->mTable[k] = uniqueKey[k];
+		this->mTable[k] = result[k];
 	}
 }
 
+
 void Playfair::showTable() {
 	// mTable에 있는 값들을 5 X 5 로 화면에 출력하시오.
-	cout << "- - - - - - - table - - - - - - -" << endl;
 	for (int i = 0; i < 25; i++) {
 		if (mTable[i] == mPair[0]) {
 			cout << mTable[i] << '/' << mPair[2];
 		} else {
 			cout << mTable[i];
 		}
-		cout << ((i % 5 == 4) ? '\n' : '\t'); // 5개마다 줄바꿈
+		cout << ((i % 5 == 4) ? '\n' : '\t');
 	}
-	cout << "- - - - - - - - - - - - - - - - -" << endl << endl;
 }
 
+// 하는 일 : 키 값 char[2]를 테이블을 기반으로 변환
 void encryptByTable(char* table, char* key) {
 	int index_one = -1, index_two = -1;
 	
-	// 첫 번째 문자(key[0])와 두 번째 문자(key[1])의 위치 찾기
+	// - 문자가 같을 때
+	if (key[0] == key[1]) return;
+
+	// 첫 번째 문자(key[0])와 두 번째 문자(key[1])의 인덱스 찾기
 	for (int i = 0; table[i] != '\0'; i++) {
 		if (key[0] == table[i]) index_one = i;
 		if (key[1] == table[i]) index_two = i;
 	}
 
+	// -- 암호화 코드 (중요) --
 	// - 열이 같을 때
 	if (index_one % 5 == index_two % 5) {
-		// 각 문자를 1칸 아래로 이동
+		// 1칸 아래로 이동
 		index_one = (index_one + 5) % 25;
 		index_two = (index_two + 5) % 25;
 	}
 	// - 행이 같을 때
 	else if (index_one / 5 == index_two / 5) {
-		// 각 문자를 1칸 오른쪽으로 이동
+		// 1칸 오른쪽으로 이동
 		index_one = (index_one + 1) % 5 + (index_one / 5) * 5;
 		index_two = (index_two + 1) % 5 + (index_two / 5) * 5;
 	}
@@ -84,6 +101,9 @@ void encryptByTable(char* table, char* key) {
 		index_one = temp;
 	}
 
+	// 쌍 인덱스 처리는 이 함수 끝난뒤에 함
+
+	// 결과 대입
 	key[0] = table[index_one];
 	key[1] = table[index_two];
 }
@@ -103,7 +123,7 @@ string Playfair::makeEncryption(string mEncryption) {
 			continue;
 		}
 
-		// 첫번째 슬롯이 비어있을경우 -> 채우고 원래 자리는 일단 공백으로 냅두기
+		// 첫번째 슬롯이 비어있을경우 -> 채우고 원래 자리는 marker로 표시
 		if(key[0] == '0'){
 			key[0] = mEncryption[index];
 			marker = index;
@@ -114,28 +134,38 @@ string Playfair::makeEncryption(string mEncryption) {
 		// 두번째 슬롯까지 채운 경우 -> 암호화 수행
 		key[1] = mEncryption[index];
 
-		key[0] = key[0] <= 'Z' ? key[0] += 32 : key[0];
-		key[1] = key[1] <= 'Z' ? key[1] += 32 : key[1];
+		//   isUpper : 암호화할 문자열의 대소문자 보존용 리스트
+    bool isUpper[2] = {
+        static_cast<bool>(isupper(key[0])),
+        static_cast<bool>(isupper(key[1]))
+    };
+		//   lowerKey : 소문자로 바꾼 키 쌍
+    char lowerKey[2] = {
+        static_cast<char>(tolower(key[0])),
+        static_cast<char>(tolower(key[1]))
+    };
 
-		
-		encryptByTable(mTable, key);
+    // 암호화 수행
+    encryptByTable(mTable, lowerKey);
 
-		// 저장
-		result[marker] = key[0];
-		result += key[1];
-		//cout << '[' << key[0] << ',' << key[1] << ']' << endl;
-		key[0] = '0';
+		// 쌍 인덱스 처리
+		if( key[0] == mPair[0] ) key[0] = mPair[2];
+		if( key[1] == mPair[0] ) key[1] = mPair[2];
+
+    // 결과 저장
+    result[marker] = isUpper[0] ? toupper(lowerKey[0]) : lowerKey[0];
+    result        += isUpper[1] ? toupper(lowerKey[1]) : lowerKey[1];
+
+    // 슬롯 초기화
+    key[0] = '0';
 	}
-	
 	return result;
 }
 
-
-
 int main() {
-	Playfair pfair("assasinator", "q/z");
+	Playfair pfair("assasinator", "h/c");
 	pfair.makeTable();
 	pfair.showTable();
-	string result = pfair.makeEncryption("Hello my name is jeong dong joon.");
+	string result = pfair.makeEncryption("Hello my name is Jeong Dong Joon.");
 	cout << result;
 }
