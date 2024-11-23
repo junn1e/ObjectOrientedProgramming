@@ -1,0 +1,4 @@
+﻿  테스트.cpp
+/테스트.cpp(1,1): error C1083: 소스 파일을 열 수 없습니다. '테스트.cpp': No such file or directory
+  (소스 파일 '/테스트.cpp'을(를) 컴파일하는 중)
+  
