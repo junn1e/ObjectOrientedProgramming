@@ -1,4 +1,0 @@
-﻿  테스트.cpp
-C:\Users\82107\Documents\대학\2-2 객체지향 프로그래밍\객체지향\테스트.cpp(237,15): warning C4244: '인수': 'time_t'에서 'unsigned int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\82107\Documents\대학\2-2 객체지향 프로그래밍\객체지향\테스트.cpp(242,14): warning C4101: 'destRect' :참조되지 않은 지역 변수입니다.
-  객체지향.vcxproj -> C:\Users\82107\Documents\대학\2-2 객체지향 프로그래밍\객체지향\x64\Debug\객체지향.exe
