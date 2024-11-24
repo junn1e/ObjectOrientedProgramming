@@ -18,47 +18,55 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="기본.cpp">
+    <ClCompile Include="memoryGame(SDL)\테스트.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="테스트.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="콘솔 조작 함수.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="프로젝트 소스.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="리스트 피커.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="3-1윈도우생성.cpp">
-      <Filter>소스 파일\SDL</Filter>
-    </ClCompile>
-    <ClCompile Include="3-2 이미지처리.cpp">
-      <Filter>소스 파일\SDL</Filter>
-    </ClCompile>
-    <ClCompile Include="3-3 마우스처리.cpp">
-      <Filter>소스 파일\SDL</Filter>
-    </ClCompile>
-    <ClCompile Include="3-4 마우스처리_응용.cpp">
-      <Filter>소스 파일\SDL</Filter>
-    </ClCompile>
-    <ClCompile Include="SDL 함수.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="프로젝트 소스(Human).cpp">
-      <Filter>소스 파일\SDL</Filter>
-    </ClCompile>
-    <ClCompile Include="프로젝트 소스(enemy1).cpp">
-      <Filter>소스 파일\SDL</Filter>
-    </ClCompile>
-    <ClCompile Include="프로젝트 소스(food1).cpp">
-      <Filter>소스 파일\SDL</Filter>
-    </ClCompile>
-    <ClCompile Include="연결리스트 스택.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="imgs\character_2.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="imgs\character_1.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="imgs\character_3.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="imgs\character_4.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="imgs\character_5.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="imgs\character_6.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="imgs\character_7.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="imgs\character_8.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="imgs\character_9.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="imgs\character_10.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="imgs\character_11.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="imgs\character_12.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="imgs\character_13.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="imgs\character_14.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="imgs\character_0.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
   </ItemGroup>
 </Project>
