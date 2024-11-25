@@ -19,7 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="memoryGame(SDL)\테스트.cpp" />
+    <ClCompile Include="memoryGame(SDL)\테스트.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="예제\기억력게임_예제.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="imgs\character_0.png" />
@@ -37,6 +43,16 @@
     <Image Include="imgs\character_7.png" />
     <Image Include="imgs\character_8.png" />
     <Image Include="imgs\character_9.png" />
+    <Image Include="imgs\free00.png" />
+    <Image Include="imgs\free01.png" />
+    <Image Include="imgs\free02.png" />
+    <Image Include="imgs\free03.png" />
+    <Image Include="imgs\free04.png" />
+    <Image Include="imgs\free05.png" />
+    <Image Include="imgs\free06.png" />
+    <Image Include="imgs\free07.png" />
+    <Image Include="imgs\free08.png" />
+    <Image Include="imgs\free09.png" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

@@ -1,212 +1,164 @@
+#include <stdio.h>
+#include <iostream>
 #include <SDL.h>
 #include <SDL_image.h>
 #include <time.h>
 #include <stdlib.h>
-#include <iostream>
-#include <vector>
-#include <sstream>
-#include <random>  // <random> 추가
 
-#define WIDTH 130*4
-#define HEIGHT 130*4
-#define MAX_STACK 20
-#define MEMORY 4
+#define WIDTH 100*16
+#define HEIGHT 100*9
 
-// MemorySlot 클래스 정의
-class MemorySlot {
-public:
+typedef struct {
     SDL_Rect rect;
-    int value;  // 해당 슬롯의 값 (1~14, 숫자)
-    bool isRevealed; // 슬롯이 공개된 상태인지 여부
     SDL_Texture* texture;
+    int dx, dy;
+    bool isFlipped;
+    bool isCorrect;
+    int cardIndex;
+} Card4Memory;
 
-    MemorySlot(SDL_Rect r, int val) : rect(r), value(val), isRevealed(false), texture(nullptr) {}
-
-    // 텍스처 로드 함수
-    bool loadTexture(SDL_Renderer* renderer, const std::string& imagePath) {
-        SDL_Surface* surface = IMG_Load(imagePath.c_str());
-        if (!surface) {
-            std::cerr << "Unable to load image: " << IMG_GetError() << std::endl;
-            return false;
-        }
-        texture = SDL_CreateTextureFromSurface(renderer, surface);
-        SDL_FreeSurface(surface);
-        return texture != nullptr;
+int main(int argc, char* argv[]) {
+    // SDL 준비
+    SDL_Window* window = NULL;
+    SDL_Renderer* renderer = NULL;
+    SDL_Texture* texture = NULL;
+    SDL_Rect destRect;
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        printf("SDL Initialization Fail: %s\n", SDL_GetError());
+        return 1;
     }
-
-    // 공개된 슬롯 그리기
-    void render(SDL_Renderer* renderer);
-};
-
-void MemorySlot::render(SDL_Renderer* renderer) {
-    if (isRevealed) {
-        // isRevealed가 true일 때 원래 이미지 표시
-        SDL_RenderCopy(renderer, texture, NULL, &rect);
-    }
-    else {
-        // isRevealed가 false일 때 character_0.png 이미지로 변경
-        if (texture == nullptr) {
-            loadTexture(renderer, "imgs/character_0.png");
-        }
-        SDL_RenderCopy(renderer, texture, NULL, &rect);
-    }
-}
-
-// MemoryGame 클래스 정의
-class MemoryGame {
-private:
-    SDL_Window* window;
-    SDL_Renderer* renderer;
-    std::vector<MemorySlot> slots;
-    int memory;  // 현재 memory 수 (게임의 난이도)
-    bool gameActive;
-    Uint32 startTime;
-
-public:
-    MemoryGame(int initialMemory) : memory(initialMemory), gameActive(true), startTime(0) {
-        if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-            std::cerr << "SDL Initialization Fail: " << SDL_GetError() << std::endl;
-            exit(1);
-        }
-        window = SDL_CreateWindow("SDL Memory Game", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, SDL_WINDOW_SHOWN);
-        if (!window) {
-            std::cerr << "SDL Window Creation Fail: " << SDL_GetError() << std::endl;
-            SDL_Quit();
-            exit(1);
-        }
-        renderer = SDL_CreateRenderer(window, -1, 0);
-        if (!renderer) {
-            std::cerr << "SDL Renderer Creation Fail: " << SDL_GetError() << std::endl;
-            SDL_DestroyWindow(window);
-            SDL_Quit();
-            exit(1);
-        }
-
-        IMG_Init(IMG_INIT_PNG);
-    }
-
-    ~MemoryGame() {
-        for (auto& slot : slots) {
-            if (slot.texture) {
-                SDL_DestroyTexture(slot.texture);
-            }
-        }
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        IMG_Quit();
+    window = SDL_CreateWindow("SDL Memory Game",
+        SDL_WINDOWPOS_UNDEFINED,
+        SDL_WINDOWPOS_UNDEFINED,
+        WIDTH, HEIGHT,
+        SDL_WINDOW_SHOWN);
+    if (!window) {
+        printf("SDL Initialization Fail: %s\n", SDL_GetError());
         SDL_Quit();
+        return 1;
+    }
+    renderer = SDL_CreateRenderer(window, -1, 0);
+    IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
+
+
+    // ==================== !코드시작! ====================
+
+    srand(time(NULL));
+
+    // 1. char[] 준비
+    char cardImage[15][22] = {
+        "imgs/character_0.png",  "imgs/character_1.png",  "imgs/character_2.png",
+        "imgs/character_3.png",  "imgs/character_4.png",  "imgs/character_5.png",
+        "imgs/character_6.png",  "imgs/character_7.png",  "imgs/character_8.png",
+        "imgs/character_9.png",  "imgs/character_10.png", "imgs/character_11.png",
+        "imgs/character_12.png", "imgs/character_13.png", "imgs/character_14.png"
+    };
+    
+    // 2. char[] -> SDL_Surface*
+    SDL_Surface* imageSurface[15];
+    for (int i = 0; i < 15; i++) {
+        imageSurface[i] = IMG_Load(cardImage[i]);
+    }
+    
+    // 3. SDL_Surface* -> SDL_Texture*
+    SDL_Texture* cardTextures[15];
+    // w, h 정보 저장
+    cardTextures[0] = SDL_CreateTextureFromSurface(renderer, imageSurface[0]);
+    const int w = imageSurface[0]->w;
+    const int h = imageSurface[0]->h;
+    SDL_FreeSurface(imageSurface[0]);
+
+    for (int i = 1; i < 15; i++) {
+        cardTextures[i] = SDL_CreateTextureFromSurface(renderer, imageSurface[i]);
+        SDL_FreeSurface(imageSurface[i]);
     }
 
-    void startGame() {
-        createSlots();
-        mainLoop();
-    }
+    // 카드 정보 설정
+    Card4Memory card4Game[14];
+    for (int i = 0; i < 14; i++) {
+        card4Game[i].texture = cardTextures[i + 1];
 
-private:
-    void createSlots() {
-        srand(time(NULL));
-        slots.clear();
-
-        // 숫자 중복 방지 배열 만들기
-        std::vector<int> numbers;
-        for (int i = 1; i <= 14; ++i) {
-            numbers.push_back(i);
-            numbers.push_back(i); // 숫자는 두 번씩 필요
-        }
-
-        // 랜덤 셔플을 위해 std::shuffle 사용
-        // random_device와 mt19937 엔진 사용
-        std::random_device rd;
-        std::mt19937 g(rd()); // Mersenne Twister 엔진
-
-        std::shuffle(numbers.begin(), numbers.end(), g);
-
-        // 랜덤한 위치에 memory 개수만큼 슬롯 생성
-        for (int i = 0; i < memory; i++) {
-            int x = rand() % (WIDTH - 130);
-            int y = rand() % (HEIGHT - 130);
-            SDL_Rect rect = { x, y, 130, 130 };
-            slots.push_back(MemorySlot(rect, numbers[i]));
-        }
-
-        // 이미지 로드 및 랜덤 배정
-        for (auto& slot : slots) {
-            std::stringstream ss;
-            ss << slot.value;
-            std::string imagePath = "imgs/character_" + ss.str() + ".png";
-
-            if (!slot.loadTexture(renderer, imagePath)) {
-                std::cerr << "Failed to load texture: " << imagePath << std::endl;
+        bool overlap;
+        SDL_Rect rect;
+        
+        do {
+            overlap = false;
+            rect = { rand() % (WIDTH - w), rand() % (HEIGHT - h), w, h };
+            // SDL_HasIntersection : 다른 객체와 겹침 여부 리턴
+            for (int j = 0; j < i; j++) {
+                if (SDL_HasIntersection(&rect, &card4Game[j].rect)) {
+                    overlap = true;
+                    break;
+                }
             }
-        }
+        } while (overlap);
 
-        startTime = SDL_GetTicks();
+        card4Game[i].rect = rect;
+        card4Game[i].isFlipped = false;
+        card4Game[i].isCorrect = false;
+        card4Game[i].cardIndex = i;
     }
 
-    void mainLoop() {
-        SDL_Event e;
-        bool quit = false;
-        while (!quit) {
-            while (SDL_PollEvent(&e) != 0) {
-                if (e.type == SDL_QUIT) {
+    // 4초 동안 카드 표시
+    for (int i = 0; i < 14; i++) {
+        SDL_RenderCopy(renderer, cardTextures[i + 1], NULL, &card4Game[i].rect);
+    }
+    SDL_RenderPresent(renderer);
+    SDL_Delay(2000);
+
+    // 카드 숨기기
+    for (int i = 0; i < 14; i++) {
+        card4Game[i].texture = cardTextures[0];
+        card4Game[i].isFlipped = false;
+    }
+
+    // 메시지 루프
+    SDL_Event event;
+    int quit = 0;
+    int progress = 0;
+    while (!quit) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                quit = true;
+            }
+            if (event.type == SDL_KEYDOWN) {
+                if (event.key.keysym.sym == SDLK_ESCAPE) {
                     quit = true;
                 }
-
-                if (e.type == SDL_MOUSEBUTTONDOWN) {
-                    handleClick(e.button.x, e.button.y);
-                }
             }
+            if (event.type == SDL_MOUSEBUTTONDOWN) {
+                SDL_Point point = { event.button.x, event.button.y };
+                // 마우스 눌렀을 때
+                for (int i = 0; i < 15; i++) {
+                    if (SDL_PointInRect(&point, &card4Game[i].rect) && !card4Game[i].isFlipped && !card4Game[i].isCorrect) {
+                        // 클릭된 카드에 대해 실행
+                        card4Game[i].isFlipped = true;
+                        if (card4Game[i].isCorrect) continue;
+                        // 보이기
+                        card4Game[i].texture = cardTextures[i + 1];
 
-            if (SDL_GetTicks() - startTime > 3000 && gameActive) {
-                for (auto& slot : slots) {
-                    slot.isRevealed = false; // 3초 후 모두 character_0 이미지로 변경
-                    slot.loadTexture(renderer, "imgs/character_0.png"); // character_0 이미지 로드
-                }
-                gameActive = false;
-            }
-
-            // 화면 그리기
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);  // 배경 검정색
-            SDL_RenderClear(renderer);
-
-            for (auto& slot : slots) {
-                slot.render(renderer);
-            }
-
-            SDL_RenderPresent(renderer);
-            SDL_Delay(16);  // 60fps
-        }
-    }
-
-    void handleClick(int x, int y) {
-        for (auto& slot : slots) {
-            if (x >= slot.rect.x && x <= slot.rect.x + slot.rect.w &&
-                y >= slot.rect.y && y <= slot.rect.y + slot.rect.h) {
-                // 클릭한 슬롯이 이미 공개된 상태가 아니면 공개
-                if (!slot.isRevealed) {
-                    slot.isRevealed = true;  // 클릭된 슬롯을 공개 상태로 설정
-
-                    // 공개된 슬롯에 맞는 이미지를 로드 (이미 로드된 텍스처는 재사용)
-                    std::stringstream ss;
-                    ss << slot.value;
-                    std::string imagePath = "imgs/character_" + ss.str() + ".png";
-
-                    // 슬롯에 이미 로드된 텍스처가 없다면 로드
-                    if (!slot.texture) {
-                        if (!slot.loadTexture(renderer, imagePath)) {
-                            std::cerr << "Failed to load texture: " << imagePath << std::endl;
+                        if (i = progress) {
+                            // 카드가 맞는 경우
+                            card4Game[i].isCorrect = true;
+                            progress++;
+                        }
+                        else {
+                            // 카드가 틀린 경우
+                            SDL_Delay(500);
+                            card4Game[i].texture = cardTextures[0];
                         }
                     }
                 }
-                break;
             }
         }
+
+        SDL_RenderClear(renderer);
+        for (int i = 0; i < 14; i++) {
+            SDL_RenderCopy(renderer, card4Game[i].texture, NULL, &card4Game[i].rect);
+        }
+        SDL_RenderPresent(renderer);
     }
 
-};
-
-int main(int argc, char* argv[]) {
-    MemoryGame game(MEMORY); // 초기 memory는 4
-    game.startGame();
+    SDL_Quit();
     return 0;
 }
