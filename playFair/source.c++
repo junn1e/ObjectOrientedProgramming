@@ -163,9 +163,9 @@ string Playfair::makeEncryption(string mEncryption) {
 }
 
 int main() {
-	Playfair pfair("assasinator", "h/c");
+	Playfair pfair("assasinaror", "r/b");
 	pfair.makeTable();
 	pfair.showTable();
-	string result = pfair.makeEncryption("Hello my name is Jeong Dong Joon.");
+	string result = pfair.makeEncryption("I like Chiken noodle.");
 	cout << result;
 }

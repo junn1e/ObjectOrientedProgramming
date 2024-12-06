@@ -24,6 +24,12 @@
     <ClCompile Include="예제\기억력게임_예제.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="asd\playfair.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="asd\main.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="imgs\character_2.png">
@@ -101,5 +107,10 @@
     <Image Include="imgs\free09.png">
       <Filter>리소스 파일</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="asd\playfair.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
