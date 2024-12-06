@@ -30,6 +30,9 @@
     <ClCompile Include="asd\main.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="memoryGame(SDL)\basic.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="imgs\character_2.png">

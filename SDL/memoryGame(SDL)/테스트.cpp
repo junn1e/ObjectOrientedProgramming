@@ -1,107 +1,120 @@
-#include <stdio.h>
 #include <iostream>
+#include <sstream>
 #include <SDL.h>
 #include <SDL_image.h>
-#include <time.h>
-#include <stdlib.h>
 #include <vector>
+#include <cstdlib>
+#include <ctime>
+#include <chrono>
+#include <thread>
 
 #define WIDTH 100*16
 #define HEIGHT 100*9
 
-typedef struct {
-    SDL_Rect rect;
-    SDL_Texture* texture;
-    int dx, dy;
-    bool isFlipped;
-    bool isCorrect;
-    int cardIndex;
-} Card4Memory;
+using namespace std;
 
-void updateScreen(SDL_Renderer* renderer, Card4Memory* card4Game) {
-    SDL_RenderClear(renderer);
-    for (int i = 0; i < 14; i++) {
-        SDL_RenderCopy(renderer, card4Game[i].texture, NULL, &card4Game[i].rect);
-    }
-    SDL_RenderPresent(renderer);
-}
-
+// 카드 클래스
 class Card {
 protected:
-    SDL_Rect rect;
-    SDL_Texture* texture;
+    SDL_Renderer* renderer;
+    SDL_Texture* taxtureFront;
+    SDL_Texture* taxtureBack;
+    int cardNumber;
     bool isFlipped;
     bool isCorrect;
 
 public:
-    Card(SDL_Rect rect, SDL_Texture* texture) : 
-        rect(rect), texture(texture), isFlipped(false), isCorrect(false) {}
+    SDL_Rect rect; // 코드 가독성 향상을 위해 public으로 설정
 
-    virtual void render(SDL_Renderer* renderer) {
-        SDL_RenderCopy(renderer, texture, NULL, &rect);
+    Card(int num, SDL_Renderer* render, SDL_Rect rect, SDL_Texture* front, SDL_Texture* back) {
+        renderer = render;
+        cardNumber = num;
+        this->rect = rect;
+        taxtureFront = front;
+        taxtureBack = back;
+        isFlipped = false;
+        isCorrect = false;
     }
-
-    virtual void flip(SDL_Texture* frontTexture, SDL_Texture* backTexture) {
-        isFlipped = !isFlipped;
-        texture = isFlipped ? frontTexture : backTexture;
+    void render() {
+        SDL_RenderCopy(renderer, this->isFlipped ? taxtureFront : taxtureBack, nullptr, &rect);
     }
-
-    virtual bool isMatch(int index) {
-        return false;
-    }
-
-    SDL_Rect getRect() const { return rect; }
-    bool isFlippedState() const { return isFlipped; }
-};
-
-class SpecialCard : public Card {
-private:
-    int effectType; // 0: 점수 배가, 1: 시간 연장 등
-
-public:
-    SpecialCard(SDL_Rect rect, SDL_Texture* texture, int effectType)
-        : Card(rect, texture), effectType(effectType) {}
-
-    void applyEffect(int& level, int& timeLeft) {
-        if (effectType == 0) {
-            level += 1; // 레벨 증가
+    // 카드 뒤집기
+    int flip(int progress) {
+        if (isFlipped) return 0;
+        isFlipped = true;
+        render();
+        if (cardNumber == progress) {
+            isCorrect = true;
+            return 1;
         }
-        else if (effectType == 1) {
-            timeLeft += 5; // 시간 추가
-        }
+        SDL_Delay(500);
+        isFlipped = false;
+        render();
+        return -1;
     }
-
-    bool isMatch(int index) override {
-        return effectType == index; // 특별한 매칭 로직
+    void reset() {
+        isFlipped = false;
+        isCorrect = false;
     }
 };
 
 class CardManager {
 private:
-    std::vector<Card*> cardPile;
+    vector<Card*> cardStack1;
+    vector<Card*> cardStack2;
+    int gameLevel;
 
 public:
-    void addCard(Card* card) {
-        cardPile.push_back(card);
-    }
-
-    void renderAll(SDL_Renderer* renderer) {
-        for (Card* card : cardPile) {
-            card->render(renderer);
+    CardManager(SDL_Renderer* renderer, SDL_Texture* taxtureBack, SDL_Texture* taxtureFronts[], int i = 3) {
+        gameLevel = i;
+        for (int i = 0; i < 14; i++) {
+            SDL_Rect rect = { 0, -300 };
+            cardStack1.push_back(new Card(i, renderer, rect, taxtureFronts[i], taxtureBack));
         }
     }
 
-    void checkClick(int x, int y, SDL_Texture* backTexture, SDL_Texture* frontTextures[]) {
-        for (Card* card : cardPile) {
-            SDL_Rect rect = card->getRect();
-            if (x > rect.x && x < rect.x + rect.w && y > rect.y && y < rect.y + rect.h && !card->isFlippedState()) {
-                card->flip(frontTextures[0], backTexture);
+    // 카드 위치 섞기
+    void shuffle(int from, int to) {
+        int w = 100, h = 100;
+        to = (to < 14) ? to : 14;
+
+        for (int i = from; i < to; ++i) {
+            SDL_Rect rect;
+            bool overlap;
+            do {
+                overlap = false;
+                rect = { rand() % (WIDTH - w), rand() % (HEIGHT - h), w, h };
+
+                for (Card* card : cardStack1) {
+                    if (SDL_HasIntersection(&rect, &card->rect)) {
+                        overlap = true;
+                        break;
+                    }
+                }
+            } while (overlap);
+        }
+    }
+
+    // 카드 전체 렌더링
+    void renderAll() {
+        for (Card* card : cardStack1) {
+            card->render();
+        }
+        for (Card* card : cardStack2) {
+            card->render();
+        }
+    }
+
+    // 클릭 이벤트리스너
+    int eventClick(SDL_Point point, int progress) {
+        for (int i = 0; i < gameLevel; i++) {
+            if (SDL_PointInRect(&point, &cardStack1[i]->rect)) {
+                return cardStack1[i]->flip(progress);
             }
         }
+        return 0;
     }
 };
-
-
 
 int main(int argc, char* argv[]) {
     // SDL 준비
@@ -126,11 +139,6 @@ int main(int argc, char* argv[]) {
     renderer = SDL_CreateRenderer(window, -1, 0);
     IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
 
-
-    // ==================== !코드시작! ====================
-
-    srand(time(NULL));
-
     // 1. char[] 준비
     char cardImage[15][22] = {
         "imgs/character_0.png",  "imgs/character_1.png",  "imgs/character_2.png",
@@ -139,116 +147,49 @@ int main(int argc, char* argv[]) {
         "imgs/character_9.png",  "imgs/character_10.png", "imgs/character_11.png",
         "imgs/character_12.png", "imgs/character_13.png", "imgs/character_14.png"
     };
-    
-    // 2. char[] -> SDL_Surface*
     SDL_Surface* imageSurface[15];
-    for (int i = 0; i < 15; i++) {
-        imageSurface[i] = IMG_Load(cardImage[i]);
-    }
-    
-    // 3. SDL_Surface* -> SDL_Texture*
-    SDL_Texture* cardTextures[15];
-    // w, h 정보 저장
-    cardTextures[0] = SDL_CreateTextureFromSurface(renderer, imageSurface[0]);
+    for (int i = 0; i < 15; i++) { imageSurface[i] = IMG_Load(cardImage[i]); }
+    SDL_Texture* taxtureBack = SDL_CreateTextureFromSurface(renderer, imageSurface[0]);
     const int w = imageSurface[0]->w;
     const int h = imageSurface[0]->h;
+    SDL_Texture* taxtureFronts[14];
     SDL_FreeSurface(imageSurface[0]);
-
-    for (int i = 1; i < 15; i++) {
-        cardTextures[i] = SDL_CreateTextureFromSurface(renderer, imageSurface[i]);
-        SDL_FreeSurface(imageSurface[i]);
-    }
-
-    // 카드 정보 설정
-    Card4Memory card4Game[14];
     for (int i = 0; i < 14; i++) {
-        card4Game[i].texture = cardTextures[i + 1];
-
-        bool overlap;
-        SDL_Rect rect;
-        
-        do {
-            overlap = false;
-            rect = { rand() % (WIDTH - w), rand() % (HEIGHT - h), w, h };
-            // SDL_HasIntersection : 다른 객체와 겹침 여부 리턴
-            for (int j = 0; j < i; j++) {
-                if (SDL_HasIntersection(&rect, &card4Game[j].rect)) {
-                    overlap = true;
-                    break;
-                }
-            }
-        } while (overlap);
-
-        card4Game[i].rect = rect;
-        card4Game[i].isFlipped = false;
-        card4Game[i].isCorrect = false;
-        card4Game[i].cardIndex = i;
+        taxtureFronts[i] = SDL_CreateTextureFromSurface(renderer, imageSurface[i+1]);
+        SDL_FreeSurface(imageSurface[i+1]);
     }
 
-    // 4초 동안 카드 표시
-    for (int i = 0; i < 14; i++) {
-        SDL_RenderCopy(renderer, cardTextures[i + 1], NULL, &card4Game[i].rect);
-    }
-    updateScreen(renderer, card4Game);
-    SDL_Delay(2000);
+    srand(time(NULL));
 
-    // 카드 숨기기
-    for (int i = 0; i < 14; i++) {
-        card4Game[i].texture = cardTextures[0];
-        card4Game[i].isFlipped = false;
-    }
-    updateScreen(renderer, card4Game);
+    CardManager manager(renderer, taxtureBack, taxtureFronts);
 
-    // 메시지 루프
+    bool quit = false;
     SDL_Event event;
-    int quit = 0;
-    int level = 10;
     int progress = 0;
-    while (level < 16 && !quit)
-    {
+
+    while (!quit) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 quit = true;
             }
-            if (event.type == SDL_KEYDOWN) {
-                if (event.key.keysym.sym == SDLK_ESCAPE) {
-                    quit = true;
-                }
-            }
-            if (event.type == SDL_MOUSEBUTTONDOWN) {
+            else if (event.type == SDL_MOUSEBUTTONDOWN) {
                 SDL_Point point = { event.button.x, event.button.y };
-                for (int i = 0; i < 15; i++) {
-                    if (SDL_PointInRect(&point, &card4Game[i].rect) && !card4Game[i].isFlipped && !card4Game[i].isCorrect) {
-                        card4Game[i].isFlipped = true;
-
-                        // 카드 열기
-                        card4Game[i].texture = cardTextures[i + 1];
-                        updateScreen(renderer, card4Game);
-                        SDL_Delay(2000);  // 카드가 열린 상태를 유지
-
-                        // 정답 확인
-                        if (i == progress) {
-                            card4Game[i].isCorrect = true; // 맞는 카드는 유지
-                            progress++; // 정답일 때만 증가
-                            printf("correct");
-                        }
-                        else {
-                            // 틀린 경우 카드 닫기
-                            card4Game[i].isFlipped = false;
-                            card4Game[i].texture = cardTextures[0];
-                            printf("wrong");
-                        }
-
-                        // 상태 렌더링
-                        updateScreen(renderer, card4Game);
-                    }
+                int result = manager.eventClick(point, progress);
+                if (result == 1) {
+                }
+                else if (result == -1) {
                 }
             }
         }
-        updateScreen(renderer, card4Game);
-        if (level == progress) {
-            SDL_Quit();
-            return 0;
-        }
+
+        SDL_RenderClear(renderer);
+        manager.renderAll();
+        SDL_RenderPresent(renderer);
     }
+
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    IMG_Quit();
+    SDL_Quit();
+    return 0;
 }
