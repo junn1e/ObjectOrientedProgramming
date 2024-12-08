@@ -52,6 +52,8 @@
     <Image Include="imgs\character_7.png" />
     <Image Include="imgs\character_8.png" />
     <Image Include="imgs\character_9.png" />
+    <Image Include="imgs\card_bomb.png" />
+    <Image Include="imgs\card_eye.png" />
     <Image Include="imgs\free00.png" />
     <Image Include="imgs\free01.png" />
     <Image Include="imgs\free02.png" />

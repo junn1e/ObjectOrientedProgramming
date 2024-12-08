@@ -110,6 +110,12 @@
     <Image Include="imgs\free09.png">
       <Filter>리소스 파일</Filter>
     </Image>
+    <Image Include="imgs\card_bomb.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="imgs\card_eye.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="asd\playfair.h">
