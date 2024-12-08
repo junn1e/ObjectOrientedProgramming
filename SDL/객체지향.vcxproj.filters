@@ -33,6 +33,12 @@
     <ClCompile Include="memoryGame(SDL)\basic.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="memoryGame(SDL)\specialCardVersioncpp.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="memoryGame(SDL)\SDLMemoryGame.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="imgs\character_2.png">
@@ -119,6 +125,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="asd\playfair.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="memoryGame(SDL)\SDLMemoryGame.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
