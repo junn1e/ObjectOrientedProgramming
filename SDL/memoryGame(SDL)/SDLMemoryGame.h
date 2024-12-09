@@ -60,9 +60,10 @@ private:
     SDL_Texture* taxtureEyes;
     SDL_Texture* taxtureBack;
     int gameLevel;
+    int cardSize;
     int progress;
 
-    void shuffle(int from, int to);
+    void shuffle(int from, int to, int size);
 
 public:
     GameManager(SDL_Renderer* renderer, SDL_Texture* taxtureBack, SDL_Texture* taxtureFronts[], TTF_Font* font, int startLv = 3);

@@ -50,7 +50,6 @@ void Card::reset(bool isFlipped) {
 
 NormalCard::NormalCard(int num, SDL_Renderer* render, SDL_Texture* front, SDL_Texture* back)
     : Card(num, render, front, back) {}
-
 int NormalCard::flip(int progress) {
     if (isFlipped) return 0;
 
@@ -73,7 +72,6 @@ int NormalCard::flip(int progress) {
 
 SpecialCard::SpecialCard(int num, SDL_Renderer* render, SDL_Texture* front, SDL_Texture* back)
     : Card(num, render, front, back) {}
-
 int SpecialCard::flip(int progress) {
     isFlipped = true;
     if (cardNumber == 0) {
@@ -83,6 +81,7 @@ int SpecialCard::flip(int progress) {
         SDL_Delay(500);
         return cardNumber;
     }
+    SDL_Delay(500);
     render();
     SDL_RenderPresent(renderer);
     return cardNumber;
@@ -106,8 +105,8 @@ GameManager::GameManager(SDL_Renderer* renderer, SDL_Texture* taxtureBack, SDL_T
     setLevel(gameLevel);
 }
 
-void GameManager::shuffle(int from, int to) {
-    int w = 100, h = 100;
+void GameManager::shuffle(int from, int to, int size) {
+    int w = size, h = size;
     to = (to < 14) ? to : 14;
 
     std::vector<Card*> allCards;
@@ -203,7 +202,7 @@ int GameManager::eventClick(SDL_Point point) {
                 score -= 10;
                 delete card;
                 cardStack2.erase(it);
-                shuffle(progress, gameLevel);
+                shuffle(progress, gameLevel, cardSize);
                 renderAll();
                 SDL_Delay(500);
                 for (int i = progress; i < gameLevel; i++) {
@@ -233,12 +232,15 @@ int GameManager::eventClick(SDL_Point point) {
 
 void GameManager::setLevel(int targetLevel) {
     gameLevel = (targetLevel < 15) ? targetLevel : 15;
+    cardSize = 2000 / (gameLevel + 5);
     progress = 0;
     cardStack2.clear();
-    cardStack2.push_back(new SpecialCard(0, renderer, taxtureBomb, taxtureBack));
-    cardStack2.push_back(new SpecialCard(1, renderer, taxtureEyes, taxtureBack));
+    for (int i = rand() % 3; i < gameLevel / 4; i++) { cardStack2.push_back(new SpecialCard(1, renderer, taxtureEyes, taxtureBack)); }
+    for (int i = rand() % 1; i < 1; i++) { cardStack2.push_back(new SpecialCard(0, renderer, taxtureBomb, taxtureBack)); }
 
-    shuffle(0, gameLevel);
+    SDL_Delay(500);
+
+    shuffle(0, gameLevel, cardSize);
     for (Card* card : cardStack1) {
         card->reset(true);
     }
@@ -246,7 +248,7 @@ void GameManager::setLevel(int targetLevel) {
         card->reset(true);
     }
     renderAll();
-    SDL_Delay(1000);
+    SDL_Delay(1000 + (gameLevel * 200));
     for (Card* card : cardStack1) {
         card->reset(false);
     }
